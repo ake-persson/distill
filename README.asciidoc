@@ -10,10 +10,10 @@ In the first level you keep Default's and then substitute them with more accurat
 
 Distill also supports some advanced operations other that substitution such as:
 
-Unset field, array item, hash key
-Merge arrays/hashes
-Immutable ie. prevent a field from being substituted at a lower hieararchy
-Reference other fields
+- Unset field, array item, hash key
+- Merge arrays/hashes
+- Immutable ie. prevent a field from being substituted at a lower hieararchy
+- Reference other fields
 
 Templates in Distill are created using JSON files. All values used for substitution are fetched from either the Distill input method or as a Puppet Fact.
 
