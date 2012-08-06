@@ -52,16 +52,61 @@ This is an exmaple template that says for Datacenter in Zurich Unset the DNS Ser
 }
 </pre>
 
+This is an example template that says for the Host Group *mysql_server* configure mysql client and server, additionally setup 2 users.
+
+*host_group/mysql_server.json*
+<pre>
+    "mysql::client::version": "5.0.1",
+    "mysql::server::version": "5.0.1",
+    "mysql::server::users::users": {
+            "user1": {
+                "host": "%",
+                "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A",
+            },
+            "user2": {
+                "host": "%",
+                "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A",
+            }
+        }
+    }
+}
+</pre>
+
 The output from the following will be an ENC in YAML format.
 
 *Output YAML ENC*
 <pre>
+---
 classes:
-    resolv:
-        dns_servers:
-            - 10.0.1.1
-            - 10.0.3.1
-...
+  resolv:
+    dns_servers:
+      - 10.0.1.1
+      - 10.0.3.1
+  mysql::client:
+    version: 5.0.1
+  mysql::server:
+    version: 5.0.1
+  mysql::server::users
+    users:
+      user1:
+        host: %
+        password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
+      user2:
+         host: %
+         password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
+parameters:
+  default: default
+  region: emea
+  country: ch
+  datacenter: zurich
+  business_unit: operations
+  owner: user1
+  host_group: mysql_server
+  host: testbox.foo.bar
+  distill_environment: production
+  distill_server: distill.foo.bar
+  host: testbox.foo.bar
+  puppet_environment: production
 </pre>
 
 In this fashion you can create a very fine grained configuration outside of Puppet. The whole idea is too keep Configuration separate from Code. Otherwise you have to re-test your Code everytime you make a change.
@@ -69,7 +114,7 @@ In this fashion you can create a very fine grained configuration outside of Pupp
 Features
 --------
 
-.Distill also supports some advanced operations:
+Distill also supports some advanced operations:
 
 - Unset field, array item, hash key
 - Merge arrays/hashes
