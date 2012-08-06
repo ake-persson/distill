@@ -1,0 +1,203 @@
+#!/usr/bin/ruby -w
+
+require 'net/https'
+require 'find'
+require 'rubygems'
+require 'yajl'
+require 'json-schema'
+require 'colorize'
+require 'optparse'
+require 'yaml'
+
+# Global variables and default configuration
+$OPTS = {}
+$OPTS[:server] = 'distill'
+$OPTS[:puppet_server] = 'puppet'
+$OPTS[:basedir] = '/etc/distill'
+$OPTS[:print_schema] = false
+$OPTS[:all_hosts] = false
+$OPTS[:use_cache] = false
+$OPTS[:format] = 'default'
+$DEBUG = false
+
+# Define options
+opts = OptionParser.new do |opts|
+  opts.banner = 'Usage: distill_schema [OPTIONS]'
+  opts.separator "\nOptions:"
+
+  opts.on('--host HOST', 'Host') do |val|
+    $OPTS[:host] = val
+  end
+
+  opts.on('-a', '--all-host', 'All host''s') do |val|
+    $OPTS[:all_hosts] = true
+  end
+
+  opts.on('-c', '--cache-dir DIRECTORY', 'Use cached results') do |val|
+    $OPTS[:use_cache] = true
+    $OPTS[:cache_dir] = val
+  end
+
+  opts.on('-s', '--server SERVER', 'Distill server') do |val|
+    $OPTS[:server] = val
+  end
+
+  opts.on('-p', '--puppet-server SERVER', 'Puppet server (Only required for the -a option)') do |val|
+    $OPTS[:puppet_server] = val
+  end
+
+  opts.on('-b', '--basedir DIRECTORY', 'Base directory for Distill') do |val|
+    $OPTS[:basedir] = val
+  end
+
+  opts.on_tail("--print-schema", "Print schema") do
+    $OPTS[:print_schema] = true
+  end
+
+  opts.on_tail("-f, --format", "Print format") do |val|
+    $OPTS[:format] = val
+  end
+
+  opts.on_tail("-d", "--debug", "Debug") do
+    $DEBUG = true
+  end
+
+  opts.on_tail("-h", "--help", "Help") do
+    puts opts
+    exit
+  end
+end
+
+# Print help if no arguments
+if ARGV.empty?
+  puts opts
+  exit
+end
+
+# Parse options
+opts.parse!
+
+# Check hostname
+if ! $OPTS[:use_cache] && ! $OPTS[:print_schema] && ! $OPTS[:all_hosts] && $OPTS[:host] !~ /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}$/
+  warn "Incorrect hostname: #{$OPTS[:host]}".yellow
+  exit 1
+end
+
+# Check Distill server
+if ! $OPTS[:use_cache] && $OPTS[:server] !~ /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}$/
+  warn "Missing or incorrect Distill server: #{$OPTS[:server]}".yellow
+  exit 1
+end
+
+# Check Puppet server
+if ! $OPTS[:use_cache] && ( $OPTS[:all_hosts] && $OPTS[:puppet_server] !~ /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6}$/
+  warn "Missing or incorrect Puppet server: #{$OPTS[:puppet_server]}".yellow
+  exit 1
+end
+
+# Check format
+if $OPTS[:format] !~ /^(default|teamcity)$/
+  warn "Unsupported format: #{$OPTS[:format]}"
+  exit 1
+end
+
+# Check for site schema
+site_schema = "#{$OPTS[:basedir]}/schema/site.json"
+if ! File.exist?(site_schema)
+  warn "File doesn't exist: #{site_schema}".yellow
+  exit 1
+end
+
+# Parse site schema
+warn "Parsing site schema: #{site_schema}" if $DEBUG
+json = File.new(site_schema, 'r')
+parser = Yajl::Parser.new
+site_hash = parser.parse(json)
+
+# Parse schemas for modules and merge them with main schema
+Dir.glob("#{$OPTS[:basedir]}/schema/module/*_schema.json" ) do |file|
+  if File.file?(file)
+    warn "Parsing schema: #{file}" if $DEBUG
+
+    json = File.new(file, 'r')
+    parser = Yajl::Parser.new
+    hash = parser.parse(json)
+
+    site_hash['properties']['classes']['properties'] = site_hash['properties']['classes']['properties'].merge(hash['properties'])
+  end
+end
+
+# Print schema
+if $OPTS[:print_schema]
+  encoder = Yajl::Encoder.new
+  json = Yajl::Encoder.encode(site_hash, [ :pretty => true, :indent => "    " ] )
+  puts json
+  exit
+end
+
+hosts = Array.new
+if $OPTS[:all_hosts] && $OPTS[:use_cache]
+  Dir.glob("#{$OPTS[:cache_dir]}/client_enc_json/*.json" ) do |file|
+    hosts << File.basename(file).sub!(/\.json$/, '')
+  end
+elsif $OPTS[:all_hosts]
+  uri = URI.parse("https://#{$OPTS[:puppet_server]}:8140/production/certificate_statuses/all")
+
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+
+  request = Net::HTTP::Get.new(uri.request_uri, 'Action' => 'yaml')
+  request.initialize_http_header( {'Accept' => 'yaml'})
+
+  response = http.request(request)
+
+  yaml = YAML::load(response.body)
+  yaml.each do |obj|
+    hosts << obj.ivars['name']
+  end
+else
+  hosts << $OPTS[:host]
+end
+
+puts "##teamcity[testSuiteStarted name='Distill Schema' captureStandardOutput='true']" if $OPTS[:format] == 'teamcity'
+
+successful = 0
+failed = 0
+hosts.each do |host|
+  puts "Validate host: #{host}" if $OPTS[:format] == 'default'
+  puts "##teamcity[testStarted name='#{host}' captureStandardOutput='true']" if $OPTS[:format] == 'teamcity'
+
+  json = nil
+  if $OPTS[:use_cache]
+    file = File.open("#{$OPTS[:cache_dir]}/client_enc_json/#{host}.json")
+    json = file.read
+    file.close
+  else
+    http = Net::HTTP.new($OPTS[:server])
+    response = http.get("/distill/index.pl/client/get/enc_json?host=#{host}")
+
+    if ( response.body =~ /^\[ERROR\]/ )
+      warn "Failed to get JSON ENC for host #{host}".yellow
+      next
+    end
+    json = response.body
+  end
+
+  errors = JSON::Validator.fully_validate(site_hash, json, :validate_schema => true)
+
+  if errors.length > 0
+    failed += 1
+    warn errors.join("\n").red if $OPTS[:format] == 'default'
+    puts "##teamcity[testFailed name='#{host}' message='Failed to validate #{host}']\n#{errors.join("\n")}" if $OPTS[:format] == 'teamcity'
+  else
+    successful += 1
+  end
+
+  puts "##teamcity[testFinished name='#{host}']" if $OPTS[:format] == 'teamcity'
+end
+
+puts "##teamcity[testSuiteFinished name='Distill Schema']" if $OPTS[:format] == 'teamcity'
+puts "\nSuccessful: #{successful} Failed: #{failed}"
+
+exit failed

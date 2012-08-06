@@ -1,0 +1,47 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+[
+<!ENTITY section_distill_admin_guide SYSTEM "../distill_admin_guide.xml">
+<!ENTITY section_distill_schema_admin_guide SYSTEM "../distill_schema_admin_guide.xml">
+<!ENTITY section_distill SYSTEM "../distill.1.xml">
+<!ENTITY section_enc-lookup SYSTEM "../enc-lookup.1.xml">
+<!ENTITY section_distill.conf SYSTEM "../distill.conf.5.xml">
+<!ENTITY section_distill_schema SYSTEM "../distill_schema.1.xml">
+]>
+
+<article lang="en">
+    <title><phrase role="heading">Distill</phrase></title>
+    <?hard-pagebreak?>
+    <section>
+        <title>Distill</title>
+        &section_distill_admin_guide;
+    </section>
+    <?hard-pagebreak?>
+    <section>
+        <title>Distill Schema</title>
+        &section_distill_schema_admin_guide;
+    </section>
+    <?hard-pagebreak?>
+    <section>
+        <title>Command Reference</title>
+        <section>
+            <title>distill</title>
+            &section_distill;
+        </section>
+        <?hard-pagebreak?>
+        <section>
+            <title>enc-lookup</title>
+            &section_enc-lookup;
+        </section>
+        <?hard-pagebreak?>
+        <section>
+            <title>distill.conf</title>
+            &section_distill.conf;
+        </section>
+        <?hard-pagebreak?>
+        <section>
+            <title>distill_schema</title>
+            &section_distill_schema;
+        </section>
+    </section>
+</article>

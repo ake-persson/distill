@@ -1,0 +1,8 @@
+Alias /distill/doc /usr/share/doc/distill-%VERSION%/html
+
+<Directory /usr/share/doc/distill-%VERSION%/html>
+    Options Indexes
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+</Directory>

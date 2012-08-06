@@ -1,0 +1,6 @@
+top     = 1000
+exclude = ProhibitSubroutinePrototypes RequireExtendedFormatting RequireDotMatchAnything RequireLineBoundaryMatching
+
+[ValuesAndExpressions::ProhibitCommaSeparatedStatements]
+    allow_last_statement_to_be_comma_separated_in_map_and_grep = 1
+

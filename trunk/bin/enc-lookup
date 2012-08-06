@@ -1,0 +1,139 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use FindBin qw($Bin);
+use Getopt::Long;
+use Config::Simple;
+use English;
+use lib "$Bin/../lib/perl5";
+use Distill::Global qw( :DEFAULT );
+use Distill::Hash qw( :DEFAULT );
+use Distill::Logging qw( :DEFAULT );
+use Distill::Print qw( :DEFAULT );
+use Distill::Update qw( :DEFAULT );
+
+# Turn off buffering for STDOUT and STDERR
+$| = 1;
+
+# Default to umask 2, so that files will be group writable
+umask 2;
+
+# If there are no arguments display help
+if ( $#ARGV == -1 ) {help()}
+
+# Arguments defaults
+my $host = undef;
+
+# Get arguments
+my %conf_args;
+GetOptions(
+    'd|debug'                 => \$DEBUG,
+    'c|config=s'              => \$CONFIG,
+    'b|basedir=s'             => \$conf_args{'main.basedir'},
+    'o|outputdir=s'           => \$conf_args{'main.outputdir'},
+    'user=s'                  => \$conf_args{'main.user'},
+    'group=s'                 => \$conf_args{'main.group'},
+    'w|web-lookup'            => \$conf_args{'lookup.web-lookup'},
+    'u|url=s'                 => \$conf_args{'lookup.url'},
+    'j|json-output'           => \$conf_args{'json.output'},
+    'e|environment=s'         => \$conf_args{'main.environment'},
+    'oe|override-environment' => \$conf_args{'main.override-environment'},
+    'h|help'                  => sub {help()},
+);
+
+# Read configuration file
+if ( !-f $CONFIG ) {error "Configuration file doesn't exist: $CONFIG"}
+my %conf_file;
+Config::Simple->import_from( $CONFIG, \%conf_file );
+
+# Merge configuration
+%CONF = merge( \%CONF_DEFS, \%conf_file, \%conf_args );
+
+# Override basedir from environment
+my $environment = $CONF{"main.environment"};
+if ( exists $CONF{"$environment.basedir"} ) {
+    $CONF{"main.basedir"} = $CONF{"$environment.basedir"};
+}
+
+# Get UID and GID
+my $uid = getpwnam( $CONF{'main.user'} );
+my $gid = getgrnam( $CONF{'main.group'} );
+
+# Verify UID and GID
+if ( !defined $uid ) {error( "Unknown user: " . $CONF{'main.user'} )}
+if ( !defined $gid ) {error( "Unknown group: " . $CONF{'main.group'} )}
+
+# Change user and group
+$EUID = $uid;
+$EGID = $gid;
+
+$DEBUG and info( "Effective user $CONF{'main.user'}($uid)" );
+$DEBUG and info( "Effective group $CONF{'main.user'}($gid)" );
+
+# Get hostname unless we're updating
+if ( !defined( $ARGV[-1] ) ) {
+    error( "You need to specify a hostname" );
+} else {
+    $host = $ARGV[-1];
+}
+
+# Verify basedir
+if ( !-d $CONF{'main.basedir'} ) {error( "Base directory doesn't exist: " . $CONF{'main.basedir'} )}
+$DEBUG and info( "Using base directory: " . $CONF{'main.basedir'} );
+
+# Verify outputdir
+if ( !-d $CONF{'main.outputdir'} ) {error( "Output directory doesn't exist: " . $CONF{'main.outputdir'} )}
+$DEBUG and info( "Using output directory: " . $CONF{'main.outputdir'} );
+
+if ( $CONF{'lookup.web-lookup'} ) {
+
+    # Print host
+    if ( $CONF{'json.output'} ) {
+        print_enc_url_json( $host, $CONF{'lookup.url'} );
+    } else {
+        print_enc_url_yaml( $host, $CONF{'lookup.url'} );
+    }
+} else {
+    update( $host, $CONF{'main.basedir'}, $CONF{'main.outputdir'}, $CONF{'main.sequence'} );
+
+    # Print host
+    if ( $CONF{'json.output'} ) {
+        print_enc_json( $host, $CONF{'main.outputdir'} );
+    } else {
+        print_enc_yaml( $host, $CONF{'main.outputdir'} );
+    }
+}
+
+exit 0;
+
+sub help {
+    print <<EOF;
+usage: enc-lookup -h
+       enc-lookup [-d] [-w] [-c config] [-b basedir] [-l logfile] [-u url] [--user user] [--group group] hostname
+
+-h, --help                  Display help.
+
+-d, --debug                 Debug.
+
+-c, --config                Configuration file, defaults to /etc/distill/distill.conf.
+
+-b, --basedir               Base directory, defaults to /etc/distill.
+
+-w, --web-lookup            Lookup using Web service, defaults to False.
+
+-u, --url                   URL for Web service, defaults to http://localhost/distill.
+
+-j, --json-output           Output JSON instead of YAML.
+
+-e, --environment           Distill environment, defaults to production.
+
+-oe, --override-environment Override Distill environment based on Puppet Facts.
+
+--user                      User that will be used to run the application.
+
+--group                     Group that will be used to run the application.
+
+EOF
+    exit 0;
+}

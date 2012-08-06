@@ -1,0 +1,280 @@
+#!/usr/bin/perl
+
+use warnings;
+use strict;
+use FindBin qw($Bin);
+use Getopt::Long;
+use Config::Simple;
+use English;
+use File::Basename;
+use lib "$Bin/../lib/perl5";
+use Distill::Global qw( :DEFAULT );
+use Distill::Hash qw( :DEFAULT );
+use Distill::Logging qw( :DEFAULT );
+use Distill::Update qw( :DEFAULT );
+use Distill::Hosts qw( :DEFAULT );
+use Distill::Print qw( :DEFAULT );
+
+# Turn off buffering for STDOUT and STDERR
+$| = 1;
+
+# Default to umask 2, so that files will be group writable
+umask 2;
+
+# If there are no arguments display help
+if ( $#ARGV == -1 ) {help()}
+
+# Arguments defaults
+my $update        = FALSE;
+my $host          = undef;
+my $print_config  = FALSE;
+my $puppet_hosts  = FALSE;
+my $all_hosts     = FALSE;
+my $changed_hosts = undef;
+my $has_parameter = undef;
+my $has_class     = undef;
+my $all_json      = FALSE;
+
+# Get arguments
+my %conf_args;
+GetOptions(
+    'd|debug'                 => \$DEBUG,
+    'u|update'                => \$update,
+    'c|config=s'              => \$CONFIG,
+    'pc|print-config'         => \$print_config,
+    'ph|puppet-hosts'         => \$puppet_hosts,
+    'ah|all-hosts'            => \$all_hosts,
+    'ch|changed-hosts=s'      => \$changed_hosts,
+    'hp|has-parameter=s'      => \$has_parameter,
+    'hc|has-class=s'          => \$has_class,
+    's|silent'                => \$conf_args{'main.silent'},
+    'b|basedir=s'             => \$conf_args{'main.basedir'},
+    'o|outputdir=s'           => \$conf_args{'main.outputdir'},
+    'l|logfile=s'             => \$conf_args{'main.logfile'},
+    'j|json-output'           => \$conf_args{'json.output'},
+    'aj|all-json-output'      => \$all_json,
+    'p|puppet-server=s'       => \$conf_args{'main.puppet-server'},
+    'e|environment=s'         => \$conf_args{'main.environment'},
+    'oe|override-environment' => \$conf_args{'main.override-environment'},
+    'n|no-color'              => \$conf_args{'main.no-color'},
+    'user=s'                  => \$conf_args{'main.user'},
+    'group=s'                 => \$conf_args{'main.group'},
+    'h|help'                  => sub {help()},
+);
+
+# Read configuration file
+if ( !-f $CONFIG ) {error "Configuration file doesn't exist: $CONFIG"}
+my %conf_file;
+Config::Simple->import_from( $CONFIG, \%conf_file );
+
+# Merge configuration
+%CONF = merge( \%CONF_DEFS, \%conf_file, \%conf_args );
+
+# Override main options from environment
+my $environment = $CONF{"main.environment"};
+foreach ( keys %CONF ) {
+    my ( $section, $key ) = split /\./;
+    if ( $section eq $environment ) {
+        $CONF{"main.$key"} = $CONF{"$environment.$key"};
+        $DEBUG and info( "Overriding main.$key based on environment: $environment" );
+    }
+}
+
+# Print configuration
+if ( $print_config ) {
+    my %conf_section;
+    foreach ( keys %CONF ) {
+        my ( $section, $key ) = split /\./, $_;
+        $conf_section{$section}{$key} = $CONF{$_};
+    }
+    foreach my $section ( keys %conf_section ) {
+        print "[$section]\n";
+        foreach my $key ( sort keys %{ $conf_section{$section} } ) {
+
+            if ( ref( $conf_section{$section}{$key} ) eq 'ARRAY' ) {
+                printf "%s = %s\n", $key, join ', ', @{ $conf_section{$section}{$key} };
+            } else {
+                printf "%s = %s\n", $key, $conf_section{$section}{$key};
+            }
+        }
+        print "\n";
+    }
+    exit 0;
+}
+
+# Get UID and GID
+my $uid = getpwnam( $CONF{'main.user'} );
+my $gid = getgrnam( $CONF{'main.group'} );
+
+# Verify UID and GID
+if ( !defined $uid ) {error( "Unknown user: " . $CONF{'main.user'} )}
+if ( !defined $gid ) {error( "Unknown group: " . $CONF{'main.group'} )}
+
+# Change user and group
+$EUID = $uid;
+$EGID = $gid;
+
+$DEBUG and info( "Effective user $CONF{'main.user'}($uid)" );
+$DEBUG and info( "Effective group $CONF{'main.user'}($gid)" );
+
+# Has parameter
+if ( defined $has_parameter ) {
+    my $hosts_ref = host_has_parameter( $has_parameter, $CONF{'main.outputdir'} );
+    printf "%s\n", join "\n", @{$hosts_ref};
+    exit 0;
+}
+
+# Has class
+if ( defined $has_class ) {
+    my $hosts_ref = host_has_class( $has_class, $CONF{'main.outputdir'} );
+    printf "%s\n", join "\n", @{$hosts_ref};
+    exit 0;
+}
+
+# Puppet hosts
+if ( $puppet_hosts ) {
+    my $hosts_ref = puppet_hosts();
+    printf "%s\n", join "\n", @{$hosts_ref};
+    exit 0;
+}
+
+# All hosts
+if ( $all_hosts ) {
+    my $hosts_ref = all_hosts( $CONF{'main.outputdir'} );
+    printf "%s\n", join "\n", @{$hosts_ref};
+    exit 0;
+}
+
+# Changed since
+if ( defined $changed_hosts ) {
+    my $time = time;
+    if ( $changed_hosts =~ /(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/ ) {
+        error "Unknown date format: $changed_hosts";
+    } elsif ( $changed_hosts =~ /(\d+)-sec-ago/ ) {
+        $time -= $1;
+    } elsif ( $changed_hosts =~ /(\d+)-min-ago/ ) {
+        $time -= $1 * 60;
+    } elsif ( $changed_hosts =~ /(\d+)-(hour|hours)-ago/ ) {
+        $time -= $1 * 60 * 60;
+    } elsif ( $changed_hosts =~ /(\d+)-(day|days)-ago/ ) {
+        $time -= $1 * 60 * 60 * 24;
+    } elsif ( $changed_hosts =~ /(\d+)-(week|weeks)-ago/ ) {
+        $time -= $1 * 60 * 60 * 24 * 7;
+    } else {
+        error "Unknown date format: $changed_hosts";
+    }
+
+    my $hosts_ref = changed_hosts( $time, $CONF{'main.outputdir'} );
+    printf "%s\n", join "\n", @{$hosts_ref};
+    exit 0;
+}
+
+# Open logfile
+open $LOGFILE, '>>', $CONF{'main.logfile'}
+  or error( "Failed to open file: $CONF{'main.logfile'}\n$!" );
+
+$DEBUG and info( "Opened logfile: $CONF{'main.logfile'}" );
+
+# Get hostname unless we're updating
+if ( !$update && !$all_json && !defined( $ARGV[-1] ) ) {
+    error( "You need to specify a hostname" );
+} else {
+    $host = $ARGV[-1];
+}
+
+# Verify basedir
+if ( !-d $CONF{'main.basedir'} ) {error( "Base directory doesn't exist: " . $CONF{'main.basedir'} )}
+$DEBUG and info( "Using base directory: " . $CONF{'main.basedir'} );
+
+# Verify outputdir
+if ( !-d $CONF{'main.outputdir'} ) {error( "Output directory doesn't exist: " . $CONF{'main.outputdir'} )}
+$DEBUG and info( "Using output directory: " . $CONF{'main.outputdir'} );
+
+$DEBUG and info( "Substitution sequence: " . join ',', @{ $CONF{'main.sequence'} } );
+
+# Update one or all hosts
+if ( $update ) {
+    my @hosts   = @{ puppet_hosts() };
+    my $threads = 0;
+    foreach my $host ( @hosts ) {
+        $threads++;
+        unless ( my $pid = fork() ) {
+            update( $host, $CONF{'main.basedir'}, $CONF{'main.outputdir'}, $CONF{'main.sequence'} );
+            $DEBUG and info( "Updated host: $host" );
+            exit;
+        }
+        if ( $threads > $CONF{'main.thread-count'} ) {
+            wait;
+            $threads--;
+        }
+    }
+    while ( wait > 0 ) { }
+
+    # Cleanup cache for hosts not in Puppet
+    clean_cache( \@hosts, $CONF{'main.outputdir'} );
+} elsif ( $all_json ) {
+    print_all_enc_json( $CONF{'main.outputdir'} );
+} else {
+    update( $host, $CONF{'main.basedir'}, $CONF{'main.outputdir'}, $CONF{'main.sequence'} );
+    if ( !$CONF{'main.silent'} ) {
+        if ( $CONF{'json.output'} ) {
+            print_enc_json( $host, $CONF{'main.outputdir'} );
+        } else {
+            print_enc_yaml( $host, $CONF{'main.outputdir'} );
+        }
+    }
+}
+
+# Close log file
+close $LOGFILE or die( "Failed to close file: $CONF{'main.logfile'}\n$!" );
+
+exit 0;
+
+sub help {
+    print <<EOF;
+usage: distill -h
+       distill [-d] [-s] [-c config] [-b basedir] [-l logfile] [--user user] [--group group] hostname
+       distill [-d] [-c config] [-b basedir] -u
+
+-h, --help                  Display help.
+
+-d, --debug                 Debug.
+
+-s, --silent                Silent mode, don't print YAML ENC.
+
+--print-config              Print configuration.
+
+-ph, --puppet-hosts         Print all Puppet hosts.
+
+-ah, --all-hosts            Print all_hosts.
+
+-ch, --changed-hosts=TIME   Print changed_hosts since x-sec-ago, x-min-ago, x-hours-ago, x-days-ago and x-week-ago.
+
+-hp, --has-parameter=PARAM  Print hosts that have parameter x. yum_server or yum_server=yum.
+
+-hc, --has-class=CLASS      Print hosts that have class x.
+
+-c, --config                Configuration file, defaults to /etc/distill/distill.conf.
+
+-b, --basedir               Base directory, defaults to /etc/distill.
+
+-o, --outputdir             Output directory, defaults to /var/lib/distill.
+
+-l, --logfile               Log file, must have same permissions as puppetmasterd or apache depending if it runs 
+                            directly from Puppet or as a Web Service. Defaults to /var/log/distill.log.
+
+-u, --update                Update all hosts in config directory.
+
+-p, --puppet-server         Puppet server, defaults to localhost.
+
+-e, --environment           Distill environment, defaults to production.
+
+-oe, --override-environment Override Distill environment based on Puppet Facts.
+
+--user                      User that will be used to run the application.
+
+--group                     Group that will be used to run the application.
+
+EOF
+    exit 0;
+}

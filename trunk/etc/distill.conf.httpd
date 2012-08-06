@@ -1,0 +1,6 @@
+Alias /distill /etc/distill/public
+
+<Directory /etc/distill/public>
+    SetHandler cgi-script
+    Options ExecCGI
+</Directory>
