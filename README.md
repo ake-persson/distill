@@ -58,15 +58,28 @@ This is an example template that says for the Host Group *mysql_server* configur
 <pre>
     "mysql::client::version": "5.0.1",
     "mysql::server::version": "5.0.1",
-    "mysql::server::users::users": {
-            "user1": {
-                "host": "%",
-                "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A",
-            },
-            "user2": {
-                "host": "%",
-                "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A",
-            }
+    "mysql::server::user::users": {
+        "user1": {
+            "host": "%",
+            "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A"
+        },
+        "user2": {
+            "host": "%",
+            "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A"
+        }
+    }
+}
+</pre>
+
+This is an example template that says for the Host *testbox* setup an additional mysql user.
+
+*host/testbox.foo.bar.json*
+<pre>
+{
+    "m:mysql::server::user::users": {
+        "user3": {
+            "host": "%",
+            "password": "*6691484EA6B50DDDE1926A220DA01FA9E575C18A"
         }
     }
 }
@@ -92,6 +105,9 @@ classes:
         host: %
         password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
       user2:
+         host: %
+         password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
+      user3:
          host: %
          password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
 parameters:
