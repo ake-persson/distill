@@ -1,14 +1,70 @@
 == Distill
 Puppet template engine using hierarchical substitution.
 
-Substitution is normally done in a fashion that maps to a location and an organisation.
+Substitution is normally usefull when you can map locations or an organistaion using a hierarchy.
 
-.Example:
-Region -> Country -> Datacenter -> Business Unit -> Owner -> Host Group -> Host 
+=== Examples
 
-In the first level you keep Default's and then substitute them with more accurate values at lower hierarchies.
+Example of an Substition sequence.
+Default -> Region -> Country -> Datacenter -> Business Unit -> Owner -> Host Group -> Host 
 
-Distill also supports some advanced operations other that substitution such as:
+In the top level you keep default's and then substitute them with more and more granular values.
+
+This is an example template that says for the Region EMEA call the Class *resolv* and pass the parameter *dns_servers* with the above values.
+
+.region/emea.json
+----
+{
+    "resolv::dns_servers": [
+        "192.168.1.1",
+        "192.168.1.2"
+    ]
+}
+----
+
+This is an example template that says for the Country Switzerland call the Class *resolv* and pass the parameter *dns_servers* with the above values.
+
+.country/ch.json
+----
+{
+    "resolv::dns_servers": [
+	"10.0.1.1",
+        "10.0.2.1"
+    ]
+}
+----
+
+This is an exmaple template that says for Datacenter in Zurich Unset the DNS Server 10.0.2.1 and then add the DNS server 10.0.3.1 instead.
+
+.datacenter/zurich.json
+----
+{
+    "u:resolv::dns_servers": [
+        "10.0.2.1"
+    ],
+    "m:resolv::dns_servers": [
+        "10.0.3.1"
+    ]
+}
+----
+
+The output from the following will be an ENC in YAML format.
+
+. Output YAML ENC
+----
+classes:
+    resolv:
+        dns_servers:
+            - 10.0.1.1
+            - 10.0.3.1
+...
+----
+
+In this fashion you can create a very fine grained configuration outside of Puppet. The whole idea is too keep Configuration separate from Code. Otherwise you have to re-test your Code everytime you make a change.
+
+=== Features
+
+.Distill also supports some advanced operations:
 
 - Unset field, array item, hash key
 - Merge arrays/hashes
@@ -23,7 +79,7 @@ Distill can run on a different server then the Puppet server thanks to it's REST
 Distill Schema is an extension to Distill that allows for the creation of JSON Schemas that can verify a configuration before it's applied to production.
 
 == Installation
-Download the Admin Guide PDF inside the repository for installation instructions.
+Download the Admin Guide PDF inside the pdfs directory.
 
 == License
-See LICENSE file.
+See LICENSE file in trunk.
