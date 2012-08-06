@@ -1,0 +1,29 @@
+== Distill
+Puppet template engine using hierarchical substitution.
+
+Substitution is normally done in a fashion that maps to a location and an organisation.
+
+.Example:
+Region -> Country -> Datacenter -> Business Unit -> Owner -> Host Group -> Host 
+
+In the first level you keep Default's and then substitute them with more accurate values at lower hierarchies.
+
+Distill also supports some advanced operations other that substitution such as:
+
+Unset field, array item, hash key
+Merge arrays/hashes
+Immutable ie. prevent a field from being substituted at a lower hieararchy
+Reference other fields
+
+Templates in Distill are created using JSON files. All values used for substitution are fetched from either the Distill input method or as a Puppet Fact.
+
+Distill can run on a different server then the Puppet server thanks to it's REST Web API.
+
+== Distill Schema
+Distill Schema is an extension to Distill that allows for the creation of JSON Schemas that can verify a configuration before it's applied to production.
+
+== Installation
+Download the Admin Guide PDF inside the repository for installation instructions.
+
+== License
+See LICENSE file.
