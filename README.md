@@ -1,43 +1,47 @@
-== Distill
+Distill
+=======
 Puppet template engine using hierarchical substitution.
 
 Substitution is normally usefull when you can map locations or an organistaion using a hierarchy.
 
-=== Examples
-
+Examples
+--------
 Example of an Substition sequence.
+
+<pre>
 Default -> Region -> Country -> Datacenter -> Business Unit -> Owner -> Host Group -> Host 
+</pre>
 
 In the top level you keep default's and then substitute them with more and more granular values.
 
 This is an example template that says for the Region EMEA call the Class *resolv* and pass the parameter *dns_servers* with the above values.
 
-.region/emea.json
-----
+*region/emea.json*
+<pre>
 {
     "resolv::dns_servers": [
         "192.168.1.1",
         "192.168.1.2"
     ]
 }
-----
+</pre>
 
 This is an example template that says for the Country Switzerland call the Class *resolv* and pass the parameter *dns_servers* with the above values.
 
-.country/ch.json
-----
+*country/ch.json*
+<pre>
 {
     "resolv::dns_servers": [
 	"10.0.1.1",
         "10.0.2.1"
     ]
 }
-----
+</pre>
 
 This is an exmaple template that says for Datacenter in Zurich Unset the DNS Server 10.0.2.1 and then add the DNS server 10.0.3.1 instead.
 
-.datacenter/zurich.json
-----
+*datacenter/zurich.json*
+<pre>
 {
     "u:resolv::dns_servers": [
         "10.0.2.1"
@@ -46,23 +50,24 @@ This is an exmaple template that says for Datacenter in Zurich Unset the DNS Ser
         "10.0.3.1"
     ]
 }
-----
+</pre>
 
 The output from the following will be an ENC in YAML format.
 
-. Output YAML ENC
-----
+*Output YAML ENC*
+<pre>
 classes:
     resolv:
         dns_servers:
             - 10.0.1.1
             - 10.0.3.1
 ...
-----
+</pre>
 
 In this fashion you can create a very fine grained configuration outside of Puppet. The whole idea is too keep Configuration separate from Code. Otherwise you have to re-test your Code everytime you make a change.
 
-=== Features
+Features
+--------
 
 .Distill also supports some advanced operations:
 
@@ -75,11 +80,14 @@ Templates in Distill are created using JSON files. All values used for substitut
 
 Distill can run on a different server then the Puppet server thanks to it's REST Web API.
 
-== Distill Schema
+Distill Schema
+==============
 Distill Schema is an extension to Distill that allows for the creation of JSON Schemas that can verify a configuration before it's applied to production.
 
-== Installation
+Installation
+============
 Download the Admin Guide PDF inside the pdfs directory.
 
-== License
+License
+=======
 See LICENSE file in trunk.
