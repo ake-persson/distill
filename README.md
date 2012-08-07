@@ -99,7 +99,7 @@ classes:
     version: 5.0.1
   mysql::server:
     version: 5.0.1
-  mysql::server::users
+  mysql::server::user
     users:
       user1:
         host: %

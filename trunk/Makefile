@@ -31,11 +31,11 @@ xml:
 	asciidoc -s -b ${ASCIIDOC_FORMAT} -d article -o distill_schema_admin_guide.xml doc/distill_schema_admin_guide.asc
 
 html: xml
-	xsltproc $(XSL_ARGS) --nonet --catalogs --output index.html $(STYLESHEETS_DIR)/xhtml/docbook.xsl doc/admin_guide.xml
+	xsltproc ${XSL_ARGS} --nonet --catalogs --output index.html ${STYLESHEETS_DIR}/xhtml/docbook.xsl doc/admin_guide.xml
 
 fo: xml
-#	xsltproc --nonet --catalogs $(XSL_FO_ARGS) --output admin_guide.fo $(STYLESHEETS_DIR)/fo/docbook.xsl doc/admin_guide.xml
-	xsltproc --nonet --catalogs $(XSL_FO_ARGS) --output admin_guide.fo doc/custom.xsl doc/admin_guide.xml
+#	xsltproc --nonet --catalogs ${XSL_FO_ARGS} --output admin_guide.fo ${STYLESHEETS_DIR}/fo/docbook.xsl doc/admin_guide.xml
+	xsltproc --nonet --catalogs ${SL_FO_ARGS} --output admin_guide.fo doc/custom.xsl doc/admin_guide.xml
 
 pdf: fo
 	fop -q -r -pdf admin_guide.pdf -fo admin_guide.fo
@@ -51,7 +51,7 @@ man:
 	xsltproc --nonet -o distill_schema.1 --catalogs $(STYLESHEETS_DIR)/manpages/docbook.xsl distill_schema.1.xml
 
 pre:
-	id -u &>/dev/null && yum -y install tidy asciidoc libxslt docbook-style-xsl docbook5-style-xsl perl-Perl-Critic perltidy fop
+	[ $( id -u ) -eq 0 ] && yum -y install tidy asciidoc libxslt docbook-style-xsl docbook5-style-xsl perl-Perl-Critic perltidy fop
 
 rpm: html man
 	mkdir -p ${TMPDIR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
