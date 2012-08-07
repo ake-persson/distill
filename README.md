@@ -138,7 +138,7 @@ parameters:
   puppet_environment: production
 </pre>
 
-In this fashion you can create a very fine grained configuration outside of Puppet. The whole idea is too keep Configuration separate from Code. Otherwise you have to re-test your Code everytime you make a change.
+In this fashion you can create a very fine grained configuration outside of Puppet. The whole idea is too keep Configuration separate from Code. Otherwise you have to re-test your Code every-time you make a change.
 
 Features
 --------
@@ -155,6 +155,9 @@ Features
 
 Roadmap
 -------
+- Write an on-line tutorial with complete examples
+- Provide --diff option to changed hosts, that will print a diff for the hosts that has changed configuration
+- Rename Expand operator to Reference and implement a Copy operator
 - Rewrite in Ruby to enable better Puppet integration (other benefits include degraded performance and memory leaks)
 - Inline queries in ERB templates for details like which hosts use module X
 - Extend REST API to allow more complicated queries
@@ -163,11 +166,94 @@ Roadmap
 
 Distill Schema
 ==============
+Validate configuration using JSON Schemas.
+
+Description
+-----------
 Distill Schema is an extension to Distill that allows for the creation of JSON Schemas that can verify a configuration before it's applied to production.
+
+This is usually done as a build step for the templates, using a Build Server like [Jenkins](http://jenkins-ci.org/).
+
+Example
+-------
+
+Using the Class mysql::server::user in the above examples for Distill a JSON Schema would look as follows:
+
+*Puppet Class*
+<pre>
+class mysql::server::user($users)
+</pre>
+
+*Distill output as Puppet YAML ENC*
+<pre>
+  mysql::server::user
+    users:
+      user1:
+        host: %
+        password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
+      user2:
+        host: %
+        password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
+<pre>
+
+*Distill Schema using a JSON Schema*
+<pre>
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "mysql::server::user": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "users": {
+                    "type": "object",
+                    "patternProperties": {
+                        ".*": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "host": {
+                                    "type": "string",
+                                    "required": true,
+                                    "pattern": "^(%|([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6})$"
+                                },
+                                "password": {
+                                    "type": "string",
+                                    "required": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</pre>
+
+Roadmap
+-------
+- Automatic generation of JSON Schema using template input too provide a starting point
+- Allow for defining standardized Regex for known types
 
 Installation
 ============
 Download the Admin Guide PDF inside the *pdfs* directory for instructions.
+
+Links
+=====
+[JSON Schema RFC](http://tools.ietf.org/html/draft-zyp-json-schema-03)
+
+Related tools
+=============
+*Hiera*
+Hiera is a similar templates engine written in Ruby.
+[Hiera](http://projects.puppetlabs.com/projects/hiera/)
+
+*Foreman*
+Foreman is a very good front-end to Puppet rather then a template engine.
+[Foreman](http://theforeman.org/)
 
 License
 =======
