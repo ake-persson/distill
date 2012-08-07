@@ -194,7 +194,7 @@ class mysql::server::user($users)
       user2:
         host: %
         password: *6691484EA6B50DDDE1926A220DA01FA9E575C18A
-<pre>
+</pre>
 
 *Distill Schema using a JSON Schema*
 <pre>
