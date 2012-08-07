@@ -6,17 +6,17 @@
 
 BuildRoot: %{buildroot}
 Source: svn+ssh://svn/distill
-Summary: IMC - Distill
+Summary: Distill
 Name: %{name}
 Version: %{version}
 Release: %{release}
 License: GPLv3
-Group: IMC/System
+Group: System
 AutoReqProv: no
 requires: perl, perl-CGI, perl-Config-Simple, perl-JSON, perl-YAML, perl-XML-Dumper, perl-XML-Parser, perl-Crypt-SSLeay, httpd
 
 %description
-IMC Distill template engine for Puppet
+Distill template engine for Puppet
 
 %post
 service httpd reload || true
