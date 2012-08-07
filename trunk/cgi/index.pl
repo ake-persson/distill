@@ -182,7 +182,7 @@ sub changed_hosts_json {
         error "Unknown date format: $changed_since";
     }
 
-    my $hosts_ref = changed_hosts( $time, $CONF{'main.outputdir'} );
+    my $hosts_ref = changed_hosts( $time, $CONF{'main.outputdir'}, FALSE );
 
     print "Content-Type: text/yaml\n\n";
     my $json = JSON->new->allow_nonref;
