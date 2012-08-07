@@ -247,13 +247,13 @@ Links
 
 Related tools
 =============
-*Hiera*
-Hiera is a similar templates engine written in Ruby.
 [Hiera](http://projects.puppetlabs.com/projects/hiera/)
 
-*Foreman*
-Foreman is a very good front-end to Puppet rather then a template engine.
+Hiera is a similar templates engine written in Ruby.
+
 [Foreman](http://theforeman.org/)
+
+Foreman is a very good front-end to Puppet rather then a template engine.
 
 License
 =======
