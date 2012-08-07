@@ -244,6 +244,7 @@ Download the Admin Guide PDF inside the *pdfs* directory for instructions.
 Links
 =====
 [JSON Schema RFC](http://tools.ietf.org/html/draft-zyp-json-schema-03)
+[Separating Data from Code](http://puppetlabs.com/blog/the-problem-with-separating-data-from-puppet-code/)
 
 Related tools
 =============
