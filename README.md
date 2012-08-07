@@ -2,11 +2,24 @@ Distill
 =======
 Puppet template engine using hierarchical substitution.
 
-Substitution is normally usefull when you can map locations or an organistaion using a hierarchy.
+Description
+-----------
+A common issue in Puppet is that you end up with a lot of logic just to determine the configuration based on certain criteria. Also changing this becomes a problem since you need to re-test your code for every change.
+
+In most programming languages it's common practice to keep Configuration separate from the actual code, this is why Distill came into existence too fill this gap. It consists of 2 part's the first is to template a configuration for hosts based on certain criteria's and the second part is to validate the actual result of these templates.
+
+Additional advantages of this approach is that it makes it very easy to detect changes for host configuration:
+- When it was changed
+- What was changed
+- Who changed it
+
+This does however assume you store your Templates in version control, which is highly encouraged.
+
+Since Distill also comes with a Web REST API it makes the host configuration available too your own glue scripts in a very simple manner.
 
 Examples
 --------
-Example of an Substition sequence.
+Example of an Substitution sequence.
 
 <pre>
 Default -> Region -> Country -> Datacenter -> Business Unit -> Owner -> Host Group -> Host 
@@ -32,13 +45,13 @@ This is an example template that says for the Country Switzerland call the Class
 <pre>
 {
     "resolv::dns_servers": [
-	"10.0.1.1",
+        "10.0.1.1",
         "10.0.2.1"
     ]
 }
 </pre>
 
-This is an exmaple template that says for Datacenter in Zurich Unset the DNS Server 10.0.2.1 and then add the DNS server 10.0.3.1 instead.
+This is an example template that says for Datacenter in Zurich Unset the DNS Server 10.0.2.1 and then merge the DNS server 10.0.3.1 instead.
 
 *datacenter/zurich.json*
 <pre>
@@ -129,17 +142,24 @@ In this fashion you can create a very fine grained configuration outside of Pupp
 
 Features
 --------
+- Separate environment's with individual templates and substitution sequences
+- Web REST API
+- Standalone server, doesn't need to run on the Puppet server
 
-Distill also supports some advanced operations:
+*Distill also supports some advanced field operators:*
 
 - Unset field, array item, hash key
 - Merge arrays/hashes
-- Immutable ie. prevent a field from being substituted at a lower hieararchy
+- Immutable ie. prevent a field from being substituted at a lower hierarchy
 - Reference other fields
 
-Templates in Distill are created using JSON files. All values used for substitution are fetched from either the Distill input method or as a Puppet Fact.
-
-Distill can run on a different server then the Puppet server thanks to it's REST Web API.
+Roadmap
+-------
+- Rewrite in Ruby to enable better Puppet integration (other benefits include degraded performance and memory leaks)
+- Inline queries in ERB templates for details like which hosts use module X
+- Extend REST API to allow more complicated queries
+- MySQL database backend
+- Web front-end
 
 Distill Schema
 ==============
@@ -147,7 +167,7 @@ Distill Schema is an extension to Distill that allows for the creation of JSON S
 
 Installation
 ============
-Download the Admin Guide PDF inside the pdfs directory.
+Download the Admin Guide PDF inside the *pdfs* directory for instructions.
 
 License
 =======
