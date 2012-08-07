@@ -51,7 +51,7 @@ man:
 	xsltproc --nonet -o distill_schema.1 --catalogs $(STYLESHEETS_DIR)/manpages/docbook.xsl distill_schema.1.xml
 
 pre:
-	[ $( id -u ) -eq 0 ] && yum -y install tidy asciidoc libxslt docbook-style-xsl docbook5-style-xsl perl-Perl-Critic perltidy fop
+	[ "`id -u`" -eq 0 ] && yum -y install tidy asciidoc libxslt docbook-style-xsl docbook5-style-xsl perl-Perl-Critic perltidy fop
 
 rpm: html man
 	mkdir -p ${TMPDIR}/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
