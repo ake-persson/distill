@@ -13,7 +13,7 @@ Release: %{release}
 License: GPLv3
 Group: System
 AutoReqProv: no
-requires: perl, perl-CGI, perl-Config-Simple, perl-JSON, perl-YAML, perl-XML-Dumper, perl-XML-Parser, perl-Crypt-SSLeay, httpd
+requires: perl, perl-CGI, perl-Config-Simple, perl-JSON, perl-YAML, perl-XML-Dumper, perl-XML-Parser, perl-Crypt-SSLeay, perl-Text-Diff, httpd
 
 %description
 Distill template engine for Puppet

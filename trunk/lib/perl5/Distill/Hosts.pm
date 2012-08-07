@@ -5,6 +5,7 @@ use strict;
 use JSON;
 use LWP;
 use YAML qw(Load);
+use Text::Diff qw(diff);
 use base qw(Exporter);
 use Distill::Global qw( :DEFAULT );
 use Distill::Logging qw( :DEFAULT );
@@ -93,8 +94,8 @@ sub all_hosts($) {
     return \@hosts;
 }
 
-sub changed_hosts($$) {
-    my ( $time, $outputdir ) = @_;
+sub changed_hosts($$$) {
+    my ( $time, $outputdir, $diff ) = @_;
     my @hosts;
 
     foreach my $dir ( glob "$outputdir/client_json/*" ) {
@@ -105,7 +106,28 @@ sub changed_hosts($$) {
         my $created = ( stat( $file ) )[8];
         my $host    = $dir;
         $host =~ s/^.*\///;
-        if ( $time < $created ) {push @hosts, $host}
+        if ( $time < $created ) {
+            if ( $diff ) {
+                if ( $#files < 1 ) {next}
+
+                my $pfile = undef;
+                for ( my $count = 0 ; $count <= $#files ; $count++ ) {
+                    my $created = ( stat( $files[$count] ) )[8];
+                    if ( $time > $created ) {
+                        $pfile = $files[$count];
+                    }
+                }
+                if ( defined $pfile ) {
+                    $file  =~ s/\.md5sum$/\.json/;
+                    $pfile =~ s/\.md5sum$/\.json/;
+                    my $diff = diff $pfile, $file, { STYLE => "Unified" };
+                    print "Host: $host\n" . '=' x 100 . "\n$diff\n\n";
+                } else {
+                    print "Host: $host\n" . '=' x 100 . "\n\n";
+                }
+            }
+            push @hosts, $host;
+        }
     }
 
     return \@hosts;

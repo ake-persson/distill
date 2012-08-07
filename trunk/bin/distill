@@ -31,6 +31,7 @@ my $print_config  = FALSE;
 my $puppet_hosts  = FALSE;
 my $all_hosts     = FALSE;
 my $changed_hosts = undef;
+my $diff          = undef;
 my $has_parameter = undef;
 my $has_class     = undef;
 my $all_json      = FALSE;
@@ -45,6 +46,7 @@ GetOptions(
     'ph|puppet-hosts'         => \$puppet_hosts,
     'ah|all-hosts'            => \$all_hosts,
     'ch|changed-hosts=s'      => \$changed_hosts,
+    'diff'                    => \$diff,
     'hp|has-parameter=s'      => \$has_parameter,
     'hc|has-class=s'          => \$has_class,
     's|silent'                => \$conf_args{'main.silent'},
@@ -164,8 +166,8 @@ if ( defined $changed_hosts ) {
         error "Unknown date format: $changed_hosts";
     }
 
-    my $hosts_ref = changed_hosts( $time, $CONF{'main.outputdir'} );
-    printf "%s\n", join "\n", @{$hosts_ref};
+    my $hosts_ref = changed_hosts( $time, $CONF{'main.outputdir'}, $diff );
+    if ( !$diff ) {printf "%s\n", join "\n", @{$hosts_ref};}
     exit 0;
 }
 
