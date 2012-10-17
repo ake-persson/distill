@@ -4,6 +4,7 @@ use warnings;
 use strict;
 use JSON;
 use base qw(Exporter);
+use Storable qw(dclone);
 use Distill::Hash qw( :DEFAULT);
 use Distill::Global qw( :DEFAULT );
 use Distill::Logging qw( :DEFAULT );
@@ -54,6 +55,7 @@ sub transform($$$) {
 
                 my $ref = $json->decode( $content );
 
+# Refactor code
                 foreach my $key ( keys %{$ref} ) {
                     if ( exists $immutable{$key} ) {
                         $DEBUG and info2( "Ignoring key since it's immutable: $1" );
@@ -75,6 +77,22 @@ sub transform($$$) {
                             delete ${ $output{$1} }{$subkey};
                         }
                         $DEBUG and info2( "Unsetting hash items in key: $1" );
+                    } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) ne 'ARRAY' && ref( ${$ref}{$key} ) ne 'HASH' ) {
+                        $immutable{$1} = TRUE;
+                        delete $output{$1};
+                        $DEBUG and info2( "Immutable and unsetting key: $1" );
+                    } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) eq 'ARRAY' ) {
+                        $immutable{$1} = TRUE;
+                        foreach my $value ( @{ ${$ref}{$key} } ) {
+                            @{ $output{$1} } = grep {$_ ne $value} @{ $output{$1} };
+                        }
+                        $DEBUG and info2( "Immutable and unsetting array items in key: $1" );
+                    } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) eq 'HASH' ) {
+                        $immutable{$1} = TRUE;
+                        foreach my $subkey ( keys %{ ${$ref}{$key} } ) {
+                            delete ${ $output{$1} }{$subkey};
+                        }
+                        $DEBUG and info2( "Immutable and unsetting hash items in key: $1" );
                     } elsif ( $key =~ /^i:(.*)/ ) {
                         $immutable{$1} = TRUE;
                         $output{$1}    = ${$ref}{$key};
@@ -95,7 +113,27 @@ sub transform($$$) {
                         $DEBUG and info2( "Immutable and merging hash key: $1" );
                     } elsif ( $key =~ /^e:(.*)/ ) {
                         $output{$1} = $output{ ${$ref}{$key} };
+                        $DEBUG and warn( "Operator e: is deprecated, please use r:" );
                         $DEBUG and info2( "Expand variable into key: $1" );
+                    } elsif ( $key =~ /^ie:(.*)/ ) {
+                        $immutable{$1} = TRUE;
+                        $output{$1} = $output{ ${$ref}{$key} };
+                        $DEBUG and warn( "Operator ie: is deprecated, please use ir:" );
+                        $DEBUG and info2( "Immutable and expand variable into key: $1" );
+                    } elsif ( $key =~ /^r:(.*)/ ) {
+                        $output{$1} = $output{ ${$ref}{$key} };
+                        $DEBUG and info2( "Reference variable for key: $1" );
+                    } elsif ( $key =~ /^ir:(.*)/ ) {
+                        $immutable{$1} = TRUE;
+                        $output{$1} = $output{ ${$ref}{$key} };
+                        $DEBUG and info2( "Immutable and reference variable for key: $1" );
+                    } elsif ( $key =~ /^c:(.*)/ ) {
+                        $output{$1} = dclone($output{ ${$ref}{$key} });
+                        $DEBUG and info2( "Copy variable into key: $1" );
+                    } elsif ( $key =~ /^ic:(.*)/ ) {
+                        $immutable{$1} = TRUE;
+                        $output{$1} = dclone($output{ ${$ref}{$key} });
+                        $DEBUG and info2( "Immutable and copy variable into key: $1" );
                     } else {
                         $output{$key} = ${$ref}{$key};
                         $DEBUG and info2( "Substituting key: $key" );

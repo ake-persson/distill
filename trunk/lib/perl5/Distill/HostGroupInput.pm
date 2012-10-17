@@ -36,7 +36,7 @@ sub host_group_input($$) {
 
         my $name = $ref->{'name'};
         foreach my $host ( @{ $ref->{'hosts'} } ) {
-            if ( $input{'host'} eq $host ) {push @{ $input{'host_group'} }, $name;}
+            if ( $input{'host'} eq $host ) {push @{ $input{'distill_host_group'} }, $name;}
         }
         push @{ $input{'host_group_list'} }, $name;
     }

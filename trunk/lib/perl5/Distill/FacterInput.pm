@@ -34,6 +34,22 @@ sub facter_input($) {
 
     $input{'puppet_environment'} = $ref->{'values'}{'environment'};
 
+    if ( $CONF{'facter.use-host-group'} && defined $input{ $CONF{'facter.host-group'} } ) {
+        foreach my $host_group ( split /,/, $input{ $CONF{'facter.host-group'} } ) {
+            push @{ $input{'facter_host_group'} }, $host_group;
+        }
+    }
+
+    foreach my $facter ( @{ $CONF{'facter.convert-to-array'} } ) {
+        my @values;
+        if ( defined $input{$facter} ) {
+            @values = split ',', $input{$facter};
+        } else {
+            @values = ();
+        }
+        $input{$facter} = \@values;
+    }
+
     return \%input;
 }
 

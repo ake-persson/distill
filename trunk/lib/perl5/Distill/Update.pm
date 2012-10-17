@@ -12,8 +12,10 @@ use Distill::Global qw( :DEFAULT );
 use Distill::Hash qw( :DEFAULT );
 use Distill::Logging qw( :DEFAULT );
 use Distill::FacterInput qw( :DEFAULT );
+#use Distill::DdbSaInput qw( :DEFAULT );
 use Distill::HostInput qw( :DEFAULT );
 use Distill::HostGroupInput qw( :DEFAULT );
+use Distill::Validate qw( :DEFAULT );
 use Distill::Transform qw( :DEFAULT );
 
 our @EXPORT = qw( update clean_cache );
@@ -61,12 +63,24 @@ sub update($$$$) {
         }
     }
 
+#    %input =
+#      merge( $facter_ref, ddb_sa_input( $host ), host_input( $host, $basedir ), host_group_input( $host, $basedir ) );
     %input =
       merge( $facter_ref, host_input( $host, $basedir ), host_group_input( $host, $basedir ) );
     $input{'default'}             = 'default';
     $input{'distill_server'}      = hostname;
     $input{'distill_environment'} = $distill_environment;
-    $input_ref                    = \%input;
+
+    # Merge Facter and Distill host groups
+    my %host_groups = map {$_, 1} @{ $input{'facter_host_group'} };
+    foreach ( @{ $input{'distill_host_group'} } ) {
+        $host_groups{$_} = 1;
+    }
+    @{ $input{'host_group'} } = keys %host_groups;
+
+    $input_ref = \%input;
+
+    validate( $input_ref );
 
     my $output_ref = transform( $basedir, $input_ref, $sequence_ref );
 

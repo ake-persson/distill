@@ -1,0 +1,78 @@
+2011-12-02: Release 0.5
+- Added logging
+- Removed enc-lookup and made it part of distill
+
+2011-12-08: Release 0.6
+- Added CGI script for REST API
+- Added Server/Client RPM
+
+2012-02-24: Release 0.9
+- Added Host Input plugin
+- Renamed Host Group all_host_groups input to host_group_list
+
+2012-03-01: Release 1.0
+- Made config a global variable
+
+2012-04-03: Release 1.1
+- Added ENC JSON output
+
+2012-04-19: Release 1.2
+- Added immutable, merge array and hash
+
+2012-04-20: Release 1.3
+- Added Facter plugin
+- Added print-config for Distill
+- Added immutable and merge
+
+2012-04-23: Release 1.4
+- Fixed bug with class having empty and parameters defined, empty definition unseting hash (AHP-461)
+- Added additional debug output for substitution
+- Added info2 logging
+- Changed prefix for facter from facter_ to fact_
+
+2012-04-23: Release 1.5
+- Fixed bug where immutable flag was not respected (AHP-466)
+- Fixed debug output key names
+
+2012-04-24: Release 1.6
+- Added debug message when it ignores key because it's immutable
+- Made facter timeout configurable and increase default to 15 sec.
+
+2012-04-30: Release 1.6.1
+- Added options for specifying Puppet server
+
+2012-04-30: Release 1.6.2
+- Fixed bug with command line input for Puppet server
+
+2012-04-30: Release 1.7
+- Added support for quering Puppet server for hosts
+- Forking updates to speed them up
+
+2012-04-30: Release 1.7.1
+- Fixed info message not to print before fork
+
+2012-04-30: Release 1.7.2
+- Added no-color output for TeamCity logs
+
+2012-05-03: Release 1.8
+- Added caching as JSON ENC
+- Deprecated XML output
+- Renamed Distill::ENC module to Distill::Print
+
+2012-05-18: Release 1.8.3
+- Fixed issue with bad headers for HTML in Ddb_sa input module
+
+2012-06-05: Release 1.8.3
+- Fixed issue with Distill Schema and Teamcity output no failure message
+
+2012-08-06: Release 1.9.0
+- Initial GitHub release
+
+2012-10-17: Release 1.9.1
+- Fixed bug with convert-to-array null values
+- Added support for new operators r:, ir:, c:, ic: and iu:
+- Deprecated operators e: and ie:
+- Added support for basing Host Groups on a Facter
+- Added support for converting a Facter to an array
+- Added regexp validation of input values
+- Added --diff option for Distill when tracking changes
