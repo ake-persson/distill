@@ -1,0 +1,35 @@
+NAME=distill
+VERSION=$(shell cat VERSION)
+RELEASE=$(shell cat RELEASE)
+TMPDIR=.build
+PERL_LIB=/Library/Perl/5.12
+
+all: dmg
+
+clean:
+	rm -rf ${TMPDIR}
+	rm -f *.pkg
+	rm -f *.dmg
+
+pkg:
+	mkdir -p ${TMPDIR}/usr/bin
+	mkdir -p ${TMPDIR}/${PERL_LIB}
+	mkdir -p ${TMPDIR}/var/{lib,log}/distill
+	cp bin/distill ${TMPDIR}/usr/bin
+	cp -r lib/perl5/Distill ${TMPDIR}/${PERL_LIB}
+	/Applications/PackageMaker.app/Contents/MacOS/PackageMaker \
+	--title ${NAME} \
+	--version "${VERSION}-${RELEASE}" \
+	--filter "\.DS_Store" \
+	--root-volume-only \
+	--verbose \
+	--no-relocate \
+	--target "10.5" \
+	--id "com.${NAME}.pkg" \
+	--root ${TMPDIR} \
+	--out "${NAME}-${VERSION}-${RELEASE}.pkg"
+
+dmg: pkg
+	mkdir ${TMPDIR}/dmg
+	cp -pR "${NAME}-${VERSION}-${RELEASE}.pkg" ${TMPDIR}/dmg
+	hdiutil create "${NAME}-${VERSION}-${RELEASE}.dmg" -volname "${NAME}" -fs HFS+ -srcfolder ${TMPDIR}/dmg
