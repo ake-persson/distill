@@ -1,5 +1,7 @@
 #!/usr/bin/perl
 
+use 5.010;
+
 use warnings;
 use strict;
 use FindBin qw($Bin);
@@ -61,6 +63,7 @@ GetOptions(
     'n|no-color'              => \$conf_args{'main.no-color'},
     'user=s'                  => \$conf_args{'main.user'},
     'group=s'                 => \$conf_args{'main.group'},
+    'ql|query-local'          => \$conf_args{'facter.query-local'},
     'h|help'                  => sub {help()},
 );
 
@@ -276,6 +279,8 @@ usage: distill -h
 --user                      User that will be used to run the application.
 
 --group                     Group that will be used to run the application.
+
+-ql, --query-local          Query Facts localy, rather then querying Puppet server (requires Distill to run as root).
 
 EOF
     exit 0;

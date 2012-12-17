@@ -61,82 +61,82 @@ sub transform($$$) {
                         $DEBUG and info2( "Ignoring key since it's immutable: $1" );
                         next;
                     } elsif ( $key =~ /^!:(.*)/ ) {
-                        delete $output{$1};
                         $DEBUG and warn( "Operator !: is deprecated, please use u:" );
                         $DEBUG and info2( "Unsetting key: $1" );
+                        delete $output{$1};
                     } elsif ( $key =~ /^u:(.*)/ && ref( ${$ref}{$key} ) ne 'ARRAY' && ref( ${$ref}{$key} ) ne 'HASH' ) {
-                        delete $output{$1};
                         $DEBUG and info2( "Unsetting key: $1" );
+                        delete $output{$1};
                     } elsif ( $key =~ /^u:(.*)/ && ref( ${$ref}{$key} ) eq 'ARRAY' ) {
+                        $DEBUG and info2( "Unsetting array items in key: $1" );
                         foreach my $value ( @{ ${$ref}{$key} } ) {
                             @{ $output{$1} } = grep {$_ ne $value} @{ $output{$1} };
                         }
-                        $DEBUG and info2( "Unsetting array items in key: $1" );
                     } elsif ( $key =~ /^u:(.*)/ && ref( ${$ref}{$key} ) eq 'HASH' ) {
+                        $DEBUG and info2( "Unsetting hash items in key: $1" );
                         foreach my $subkey ( keys %{ ${$ref}{$key} } ) {
                             delete ${ $output{$1} }{$subkey};
                         }
-                        $DEBUG and info2( "Unsetting hash items in key: $1" );
                     } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) ne 'ARRAY' && ref( ${$ref}{$key} ) ne 'HASH' ) {
+                        $DEBUG and info2( "Immutable and unsetting key: $1" );
                         $immutable{$1} = TRUE;
                         delete $output{$1};
-                        $DEBUG and info2( "Immutable and unsetting key: $1" );
                     } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) eq 'ARRAY' ) {
+                        $DEBUG and info2( "Immutable and unsetting array items in key: $1" );
                         $immutable{$1} = TRUE;
                         foreach my $value ( @{ ${$ref}{$key} } ) {
                             @{ $output{$1} } = grep {$_ ne $value} @{ $output{$1} };
                         }
-                        $DEBUG and info2( "Immutable and unsetting array items in key: $1" );
                     } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) eq 'HASH' ) {
+                        $DEBUG and info2( "Immutable and unsetting hash items in key: $1" );
                         $immutable{$1} = TRUE;
                         foreach my $subkey ( keys %{ ${$ref}{$key} } ) {
                             delete ${ $output{$1} }{$subkey};
                         }
-                        $DEBUG and info2( "Immutable and unsetting hash items in key: $1" );
                     } elsif ( $key =~ /^i:(.*)/ ) {
+                        $DEBUG and info2( "Immutable and substituting key: $1" );
                         $immutable{$1} = TRUE;
                         $output{$1}    = ${$ref}{$key};
-                        $DEBUG and info2( "Immutable and substituting key: $1" );
                     } elsif ( $key =~ /^m:(.*)/ && ref( ${$ref}{$key} ) eq 'ARRAY' ) {
-                        push @{ $output{$1} }, @{ ${$ref}{$key} };
                         $DEBUG and info2( "Merging array key: $1" );
+                        push @{ $output{$1} }, @{ ${$ref}{$key} };
                     } elsif ( $key =~ /^m:(.*)/ && ref( ${$ref}{$key} ) eq 'HASH' ) {
-                        %{ $output{$1} } = merge( $output{$1}, ${$ref}{$key} );
                         $DEBUG and info2( "Merging hash key: $1" );
+                        %{ $output{$1} } = merge( $output{$1}, ${$ref}{$key} );
                     } elsif ( $key =~ /^im:(.*)/ && ref( ${$ref}{$key} ) eq 'ARRAY' ) {
+                        $DEBUG and info2( "Immutable and merging array key: $1" );
                         $immutable{$1} = TRUE;
                         push @{ $output{$1} }, @{ ${$ref}{$key} };
-                        $DEBUG and info2( "Immutable and merging array key: $1" );
                     } elsif ( $key =~ /^im:(.*)/ && ref( ${$ref}{$key} ) eq 'HASH' ) {
+                        $DEBUG and info2( "Immutable and merging hash key: $1" );
                         $immutable{$1} = TRUE;
                         %{ $output{$1} } = merge( $output{$1}, ${$ref}{$key} );
-                        $DEBUG and info2( "Immutable and merging hash key: $1" );
                     } elsif ( $key =~ /^e:(.*)/ ) {
-                        $output{$1} = $output{ ${$ref}{$key} };
                         $DEBUG and warn( "Operator e: is deprecated, please use r:" );
                         $DEBUG and info2( "Expand variable into key: $1" );
-                    } elsif ( $key =~ /^ie:(.*)/ ) {
-                        $immutable{$1} = TRUE;
                         $output{$1} = $output{ ${$ref}{$key} };
+                    } elsif ( $key =~ /^ie:(.*)/ ) {
                         $DEBUG and warn( "Operator ie: is deprecated, please use ir:" );
                         $DEBUG and info2( "Immutable and expand variable into key: $1" );
+                        $immutable{$1} = TRUE;
+                        $output{$1} = $output{ ${$ref}{$key} };
                     } elsif ( $key =~ /^r:(.*)/ ) {
-                        $output{$1} = $output{ ${$ref}{$key} };
                         $DEBUG and info2( "Reference variable for key: $1" );
+                        $output{$1} = $output{ ${$ref}{$key} };
                     } elsif ( $key =~ /^ir:(.*)/ ) {
+                        $DEBUG and info2( "Immutable and reference variable for key: $1" );
                         $immutable{$1} = TRUE;
                         $output{$1} = $output{ ${$ref}{$key} };
-                        $DEBUG and info2( "Immutable and reference variable for key: $1" );
                     } elsif ( $key =~ /^c:(.*)/ ) {
-                        $output{$1} = dclone($output{ ${$ref}{$key} });
                         $DEBUG and info2( "Copy variable into key: $1" );
+                        $output{$1} = dclone($output{ ${$ref}{$key} });
                     } elsif ( $key =~ /^ic:(.*)/ ) {
+                        $DEBUG and info2( "Immutable and copy variable into key: $1" );
                         $immutable{$1} = TRUE;
                         $output{$1} = dclone($output{ ${$ref}{$key} });
-                        $DEBUG and info2( "Immutable and copy variable into key: $1" );
                     } else {
-                        $output{$key} = ${$ref}{$key};
                         $DEBUG and info2( "Substituting key: $key" );
+                        $output{$key} = ${$ref}{$key};
                     }
                 }
             }

@@ -9,7 +9,7 @@ our @EXPORT = qw( merge );
 sub merge {
     my %result;
 
-    if   ( !defined %{ $_[0] } ) {%result = ()}
+    if   ( ! %{ $_[0] } ) {%result = ()}
     else                         {%result = %{ $_[0] }}
     shift;
 
