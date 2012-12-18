@@ -11,12 +11,19 @@ clean:
 	rm -f *.pkg
 	rm -f *.dmg
 
+pre:
+	sudo curl ${CURL_OPTS} -L http://cpanmin.us | perl - --sudo App::cpanminus
+
 pkg:
 	mkdir -p ${TMPDIR}/usr/bin
 	mkdir -p ${TMPDIR}/${PERL_LIB}
 	mkdir -p ${TMPDIR}/var/{lib,log}/distill
 	cp bin/distill ${TMPDIR}/usr/bin
 	cp -r lib/perl5/Distill ${TMPDIR}/${PERL_LIB}
+	cpanm -n -L ${TMPDIR}/${PERL_LIB} Config::Simple YAML
+	cpanm -n --interactive -L ${TMPDIR}/${PERL_LIB} JSON
+	mv ${TMPDIR}/${PERL_LIB}/lib/perl5/* ${TMPDIR}/${PERL_LIB}
+	rm -rf  ${TMPDIR}/${PERL_LIB}/lib
 	/Applications/PackageMaker.app/Contents/MacOS/PackageMaker \
 	--title ${NAME} \
 	--version "${VERSION}-${RELEASE}" \
