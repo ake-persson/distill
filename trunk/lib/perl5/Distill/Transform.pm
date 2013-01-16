@@ -17,7 +17,7 @@ sub transform($$$) {
     my $json = JSON->new->allow_nonref;
 
     my @templ_dirs = ( '' );
-    if ($CONF{'main.use-staging'} eq TRUE) {
+    if ( $CONF{'main.use-staging'} eq TRUE ) {
         @templ_dirs = ( 'shared', 'staged' );
     }
 
@@ -60,7 +60,7 @@ sub transform($$$) {
 
                 my $ref = $json->decode( $content );
 
-# Refactor code
+                # Refactor code
                 foreach my $key ( keys %{$ref} ) {
                     if ( exists $immutable{$key} ) {
                         $DEBUG and info2( "Ignoring key since it's immutable: $1" );
@@ -82,7 +82,8 @@ sub transform($$$) {
                         foreach my $subkey ( keys %{ ${$ref}{$key} } ) {
                             delete ${ $output{$1} }{$subkey};
                         }
-                    } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) ne 'ARRAY' && ref( ${$ref}{$key} ) ne 'HASH' ) {
+                    } elsif ( $key =~ /^iu:(.*)/ && ref( ${$ref}{$key} ) ne 'ARRAY' && ref( ${$ref}{$key} ) ne 'HASH' )
+                    {
                         $DEBUG and info2( "Immutable and unsetting key: $1" );
                         $immutable{$1} = TRUE;
                         delete $output{$1};
@@ -124,21 +125,21 @@ sub transform($$$) {
                         $DEBUG and warn( "Operator ie: is deprecated, please use ir:" );
                         $DEBUG and info2( "Immutable and expand variable into key: $1" );
                         $immutable{$1} = TRUE;
-                        $output{$1} = $output{ ${$ref}{$key} };
+                        $output{$1}    = $output{ ${$ref}{$key} };
                     } elsif ( $key =~ /^r:(.*)/ ) {
                         $DEBUG and info2( "Reference variable for key: $1" );
                         $output{$1} = $output{ ${$ref}{$key} };
                     } elsif ( $key =~ /^ir:(.*)/ ) {
                         $DEBUG and info2( "Immutable and reference variable for key: $1" );
                         $immutable{$1} = TRUE;
-                        $output{$1} = $output{ ${$ref}{$key} };
+                        $output{$1}    = $output{ ${$ref}{$key} };
                     } elsif ( $key =~ /^c:(.*)/ ) {
                         $DEBUG and info2( "Copy variable into key: $1" );
-                        $output{$1} = dclone($output{ ${$ref}{$key} });
+                        $output{$1} = dclone( $output{ ${$ref}{$key} } );
                     } elsif ( $key =~ /^ic:(.*)/ ) {
                         $DEBUG and info2( "Immutable and copy variable into key: $1" );
                         $immutable{$1} = TRUE;
-                        $output{$1} = dclone($output{ ${$ref}{$key} });
+                        $output{$1}    = dclone( $output{ ${$ref}{$key} } );
                     } else {
                         $DEBUG and info2( "Substituting key: $key" );
                         $output{$key} = ${$ref}{$key};

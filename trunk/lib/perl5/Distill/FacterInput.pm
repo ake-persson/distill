@@ -22,11 +22,11 @@ sub facter_input($) {
             error "Failed to run Facter:\n$facter_out";
         }
 
-# MAY POLUTE OUTPUT WITH ERROR'S
+        # MAY POLUTE OUTPUT WITH ERROR'S
 
         my %facts;
-        foreach(split /\n/, $facter_out) {
-            my ($key, $value) = split / => /;
+        foreach ( split /\n/, $facter_out ) {
+            my ( $key, $value ) = split / => /;
             $facts{$key} = $value;
         }
 
@@ -35,8 +35,7 @@ sub facter_input($) {
         }
 
         $input{'puppet_environment'} = $facts{'environment'};
-    }
-    else {
+    } else {
         my $browser = LWP::UserAgent->new;
         $browser->timeout( $CONF{'main.puppet-timeout'} );
         $browser->default_header( 'Accept' => 'yaml' );

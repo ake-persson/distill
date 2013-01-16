@@ -9,8 +9,8 @@ our @EXPORT = qw( merge );
 sub merge {
     my %result;
 
-    if   ( ! %{ $_[0] } ) {%result = ()}
-    else                         {%result = %{ $_[0] }}
+    if   ( !%{ $_[0] } ) {%result = ()}
+    else                 {%result = %{ $_[0] }}
     shift;
 
     foreach my $ref ( @_ ) {

@@ -33,10 +33,10 @@ our %CONF_DEFS = (
     'main.use-staging'          => TRUE,
     'lookup.web-lookup'         => FALSE,
     'lookup.url'                => 'http://localhost/distill',
-    'facter.facts'              => ['operatingsystem', 'operatingsystemrelease'],
-    'facter.use-host-group'     => FALSE,
-    'facter.host-group'         => 'host_group',
-    'facter.query-local'        => FALSE,
+    'facter.facts'          => ['operatingsystem', 'operatingsystemrelease'],
+    'facter.use-host-group' => FALSE,
+    'facter.host-group'     => 'host_group',
+    'facter.query-local'    => FALSE,
 );
 
 1;

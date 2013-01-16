@@ -118,7 +118,7 @@ sub changed_hosts($$$) {
                     }
                 }
                 if ( defined $pfile ) {
-                    $file  =~ s/\.md5sum$/\.json/;
+                    $file =~ s/\.md5sum$/\.json/;
                     $pfile =~ s/\.md5sum$/\.json/;
                     my $diff = diff $pfile, $file, { STYLE => "Unified" };
                     print "Host: $host\n" . '=' x 100 . "\n$diff\n\n";

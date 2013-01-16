@@ -13,16 +13,16 @@ perl_tidy()
 
 
 while read file; do
-    file_type=$( file -i "$file" | cut -d ' ' -f 2 )
+    file_type=$( file -I "$file" | cut -d ' ' -f 2 )
     file_ext=$( echo "$file" | awk -F . '{ print $NF }' )
 
     case "$file_type" in
         'text/x-perl;')
             perl_tidy "$file"
             ;;
-        'text/x-ruby;')
-            rbeautify "$file"
-            ;;
+#        'text/x-ruby;')
+#            rbeautify "$file"
+#            ;;
         *)
             if [ $file_ext == 'pm' ]; then
                 perl_tidy "$file"

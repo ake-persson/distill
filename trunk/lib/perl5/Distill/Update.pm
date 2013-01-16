@@ -12,6 +12,7 @@ use Distill::Global qw( :DEFAULT );
 use Distill::Hash qw( :DEFAULT );
 use Distill::Logging qw( :DEFAULT );
 use Distill::FacterInput qw( :DEFAULT );
+
 #use Distill::DdbSaInput qw( :DEFAULT );
 use Distill::HostInput qw( :DEFAULT );
 use Distill::HostGroupInput qw( :DEFAULT );
@@ -63,8 +64,8 @@ sub update($$$$) {
         }
     }
 
-#    %input =
-#      merge( $facter_ref, ddb_sa_input( $host ), host_input( $host, $basedir ), host_group_input( $host, $basedir ) );
+ #    %input =
+ #      merge( $facter_ref, ddb_sa_input( $host ), host_input( $host, $basedir ), host_group_input( $host, $basedir ) );
     %input =
       merge( $facter_ref, host_input( $host, $basedir ), host_group_input( $host, $basedir ) );
     $input{'default'}             = 'default';
