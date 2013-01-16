@@ -268,6 +268,8 @@ usage: distill -h
 -l, --logfile               Log file, must have same permissions as puppetmasterd or apache depending if it runs 
                             directly from Puppet or as a Web Service. Defaults to /var/log/distill.log.
 
+-us, --use-staging          Use staging and shared template directories.
+
 -u, --update                Update all hosts in config directory.
 
 -p, --puppet-server         Puppet server, defaults to localhost.

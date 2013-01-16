@@ -30,6 +30,7 @@ our %CONF_DEFS = (
     'main.cache-keep-days'      => 30,
     'main.environment'          => 'production',
     'main.override-environment' => FALSE,
+    'main.use-staging'          => TRUE,
     'lookup.web-lookup'         => FALSE,
     'lookup.url'                => 'http://localhost/distill',
     'facter.facts'              => ['operatingsystem', 'operatingsystemrelease'],

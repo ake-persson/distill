@@ -17,9 +17,15 @@ sub facter_input($) {
 
     # Check for empty hash value
     if ( $CONF{'facter.query-local'} ) {
+        my $facter_out = `facter -p 2>&1`;
+        if ( $? != 0 ) {
+            error "Failed to run Facter:\n$facter_out";
+        }
+
+# MAY POLUTE OUTPUT WITH ERROR'S
+
         my %facts;
-        foreach(`facter -p`) {
-            chomp();
+        foreach(split /\n/, $facter_out) {
             my ($key, $value) = split / => /;
             $facts{$key} = $value;
         }

@@ -16,10 +16,15 @@ sub transform($$$) {
 
     my $json = JSON->new->allow_nonref;
 
+    my @templ_dirs = ( '' );
+    if ($CONF{'main.use-staging'} eq TRUE) {
+        @templ_dirs = ( 'shared', 'staged' );
+    }
+
     my %output = %{$input_ref};
     undef my %immutable;
     foreach my $templ ( @{$sequence_ref} ) {
-        foreach my $templ_type ( ( 'shared', 'staged' ) ) {
+        foreach my $templ_type ( @templ_dirs ) {
 
             undef my @values;
             if ( ref( $input_ref->{$templ} ) eq 'ARRAY' ) {
