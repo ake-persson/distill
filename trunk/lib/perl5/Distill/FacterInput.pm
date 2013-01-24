@@ -30,6 +30,18 @@ sub facter_input($) {
             $facts{$key} = $value;
         }
 
+        # Write to JSON file, if configured to cache it
+        if ( $CONF{'facter.cache'} ) {
+            my $file = $CONF{'facter.cache-file'};
+            open my $fhandle, '>', $file
+                or error( "Failed to open file: $file\n$!" );
+            my $json = JSON->new->allow_nonref;
+            print $fhandle $json->pretty->encode( \%facts )
+                or error( "Failed to write to file: $file\n$!" );
+            close $fhandle or error( "Failed to close file: $file\n$!" );
+            $DEBUG and info( "Wrote facts cache to: $file" );
+        }
+
         foreach my $fact ( @{ $CONF{'facter.facts'} } ) {
             $input{$fact} = $facts{$fact};
         }
