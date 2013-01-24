@@ -34,7 +34,6 @@ our %CONF_DEFS = (
     'lookup.web-lookup'         => FALSE,
     'lookup.url'                => 'http://localhost/distill',
     'facter.cache'          => TRUE,
-    'facter.cache-file'     => '/var/lib/puppet/last_run_facts.json',
     'facter.facts'          => ['operatingsystem', 'operatingsystemrelease'],
     'facter.use-host-group' => FALSE,
     'facter.host-group'     => 'host_group',
