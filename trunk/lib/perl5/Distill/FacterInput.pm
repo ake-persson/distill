@@ -6,6 +6,7 @@ use JSON;
 use LWP;
 use YAML qw(Load);
 use Digest::MD5 qw(md5_hex);
+use Sys::Hostname;
 use base qw(Exporter);
 use POSIX qw(strftime);
 use Distill::Global qw( :DEFAULT );
@@ -32,7 +33,7 @@ sub facter_input($) {
             $facts{$key} = $value;
         }
 
-        if ( $CONF{'facter.cache'} ) { facter_cache( $input{'host'}, \%facts ) }
+        if ( $CONF{'facter.cache'} ) {facter_cache( $input{'host'}, \%facts )}
 
         foreach my $fact ( @{ $CONF{'facter.facts'} } ) {
             $input{$fact} = $facts{$fact};
@@ -80,18 +81,17 @@ sub facter_input($) {
 }
 
 sub facter_cache($) {
-    my $host = shift;
+    my $host      = shift;
     my $facts_ref = shift;
 
     my $json = JSON->new->allow_nonref;
 
-    my $dir = "client_facts";
+    my $dir       = "client_facts";
     my $outputdir = $CONF{'main.outputdir'};
     if ( !-d "$outputdir/$dir" )       {mkdir "$outputdir/$dir"}
     if ( !-d "$outputdir/$dir/$host" ) {mkdir "$outputdir/$dir/$host"}
 
     # Get last MD5 to compare
-    my $md5   = '';
     my @files = glob( "$outputdir/$dir/$host/*.md5sum" );
     if ( $#files >= 0 ) {
         my $last = pop @files;
@@ -104,24 +104,12 @@ sub facter_cache($) {
             if ( $created < ( $now - $days ) ) {
                 $DEBUG and info( "Removed cache file: $file" );
                 unlink $file;
-                $file =~ s/\.md5sum$/\.json/;
-                $DEBUG and info( "Removed cache file: $file" );
-                unlink $file;
             }
         }
-
-        open my $fhandle, '<', "$last"
-          or error( "Failed to open file: $last\n$!" );
-        $md5 = <$fhandle>;
-        close $fhandle or error( "Failed to close file: $last\n$!" );
     }
 
-    my $datetime    = strftime "%Y%m%d%H%M%S", localtime;
+    my $datetime = strftime "%Y%m%d%H%M%S", localtime;
     my $json_output = $json->pretty->encode( $facts_ref );
-    my $md5_output  = md5_hex( $json_output );
-
-    # Write new cache file if the result has changed
-    if ( $md5 eq $md5_output ) {return}
 
     # Write JSON file
     my $file = $datetime . '.json';
@@ -132,14 +120,19 @@ sub facter_cache($) {
     close $fhandle or error( "Failed to close file: $dir/$host/$file\n$!" );
     $DEBUG and info( "Wrote output to: $dir/$host/$file" );
 
-    # Write MD5 file
-    $file = $datetime . '.md5sum';
-    open $fhandle, '>', "$outputdir/$dir/$host/$file"
-      or error( "Failed to open file: $dir/$host/$file\n$!" );
-    print $fhandle $md5_output
-      or error( "Failed to write to file: $dir/$host/$file\n$!" );
-    close $fhandle or error( "Failed to close file: $dir/$host/$file\n$!" );
-    $DEBUG and info( "Wrote output to: $dir/$host/$file" );
+    if ( hostname ne $host ) {return}
+
+    $dir = "state";
+    if ( !-d "$outputdir/$dir" ) {mkdir "$outputdir/$dir"}
+
+    # Write JSON file
+    $file = 'last_run_facts.json';
+    open $fhandle, '>', "$outputdir/$dir/$file"
+      or error( "Failed to open file: $dir/$file\n$!" );
+    print $fhandle $json_output
+      or error( "Failed to write to file: $dir/$file\n$!" );
+    close $fhandle or error( "Failed to close file: $dir/$file\n$!" );
+    $DEBUG and info( "Wrote output to: $dir/$file" );
 }
 
 1;

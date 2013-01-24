@@ -119,6 +119,20 @@ sub update($$$$) {
     my $json_output = $json->pretty->encode( $output_ref );
     my $md5_output  = md5_hex( $json_output );
 
+    if ( hostname eq $host ) {
+        my $dir = "state";
+        if ( !-d "$outputdir/$dir" ) {mkdir "$outputdir/$dir"}
+
+        # Write JSON file
+        my $file = 'last_run.json';
+        open my $fhandle, '>', "$outputdir/$dir/$file"
+          or error( "Failed to open file: $dir/$file\n$!" );
+        print $fhandle $json_output
+          or error( "Failed to write to file: $dir/$file\n$!" );
+        close $fhandle or error( "Failed to close file: $dir/$file\n$!" );
+        $DEBUG and info( "Wrote output to: $dir/$file" );
+    }
+
     # Write new cache file if the result has changed
     if ( $md5 eq $md5_output ) {return}
 
